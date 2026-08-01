@@ -1,0 +1,23 @@
+{
+  "name": "StockPrice Dev Environment",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  
+  // Expose the ports we need for frontend and backend
+  "forwardPorts": [3000, 8080],
+  
+  // Install dependencies automatically after the container is created
+  "postCreateCommand": "cd backend && npm install && cd ../frontend && npm install",
+  
+  // Configure VS Code inside the container
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "editor.formatOnSave": true
+      },
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  }
+}

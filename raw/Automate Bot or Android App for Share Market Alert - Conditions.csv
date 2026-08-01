@@ -1,0 +1,28 @@
+,Heading,
+1,Momentum Stocks,"All F&O Stock ma Chhela 3 month na data jema Day Change Point & Percentage, Open to High Point & Percentage, Open to Low Point & Percentage. Aa badha ma on an average 3 month ma aprox 60 thi 66 day trading hoy tema thi je stock on an average 60-66 Days mathi 50 day minimum 0.95% thi uppar moment aapeli hoy teva stock ne filter karva."
+,,
+,,
+,,
+2,Stock Trend,"index and All F&O Stock ma 'EMA Cross' mate jyare, LTP>5 Ema, LTP>9Ema, LTP>21Ema hoy to UpTrend(▲), ane LTP<5Ema, LTP<9Ema, LTP<21Ema hoy to DownTrend(▼). (LTP=Current Price)"
+,,
+*,Day Trend,Day Trend' mate Previous close ni price current price karta uppar hoy to 'UP' Trend ane Previous close ni price current price karta Niche hoy to 'Down' Trend.
+*,Signal,"SIGNAL' mate, jo LTP> badhi EMA(5,9,21) hoy to UpTrend ma hoy ane Stock ni price previous close karta ane current price karta pan uppar hoy to 'BUY' Trend, ane jo LTP< badhi EMA(5,9,21) hoy to DownTrend ma hoy ane Stock ni price previous close karta ane current price karta pan Niche hoy to 'SELL' Trend."
+,,
+,,
+*,Intraday,Signal mate LTP jyare 9 EMA High ni uppar closing aape to Buy Signal ane LTP jyare 9 EMA Low ni Niche Closing aape to Sell Signal.
+,,
+,,
+3,Open= Hi / Lo Stocks,"index and All F&O Stock ma Open = High hoy to 'SELL' mate ane Open = Low hoy to 'BUY' mate, Teva Stock Filter karva."
+,,
+4,Support & Resistance,"index and All F&O Stock ma, 5 Support and 5 Resistance mate, Open Price ma Strike Price Diffrence ne Add Karvani Resistance mate, ane Open Price ma Strike Price Diffrence ne Substact karvani Support mate."
+,,
+,,"Example tarike, Jo ADANIPORTS ma Option Chain ma 1400 ane teni pachi ni Strike Price 1420 Ni hoy to teno Diffrence 20 thayo to tene Open Price ma Add karo atle R1 male ane Substract karo to S1 Male. Aama jo possible hoy to Strick price ni Gap Valu ame Manual Change kari shakiye tevu option rakhvu. athva divide by 2 nu option rakhvu (20/2=10)."
+,,
+,,
+,,
+5,Intraday 5Ema Buy/Sell,"Index and All F&O Stock ma, jyare pan LTP>9Ema Low, LTP>9Ema High,  thai atle te index and F&O Stock ma 'Buy' nu Alert ane Jyare pan LTP<9Ema High, LTP<9Ema Low,  thai atle te index and F&O  ma 'SELL' nu Alert avi jai. Ane tema time frame aapdi rite set karvi hoy to thai tevu karvu (1,2,3,5,15,1hour,4hour,1day,1week,1month etc.) by default 3min ni time frame rakhvi."
+,,
+,,
+,,
+,,
+,,"We Need All F&O Stocks 3 month data with Day Change Point & Percentage, Open to High Point & Percentage, Open to Low Point & Percentage. in a 3 Month Average Trading days are 60 to 66 days. in that period Stock Should be Trade with a 50 day minimum of 0.95%, then you can filter the stock."
