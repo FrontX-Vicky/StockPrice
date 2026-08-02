@@ -5,7 +5,7 @@ const IndexTab = ({ indices }) => {
   const srIndices = indices.filter(index => index.sr != null);
 
   return (
-    <div className="glass-panel" style={{  }}>
+    <div >
       <h2 style={{ fontWeight: 600 }}>Indices Support & Resistance</h2>
       
       {srIndices.length === 0 ? (

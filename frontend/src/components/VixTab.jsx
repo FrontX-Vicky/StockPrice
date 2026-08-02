@@ -18,7 +18,7 @@ const VixTab = ({ indices }) => {
   const target = targets.find(i => i.symbol.replace(/_/g, ' ') === selectedIndex) || targets[0];
 
   return (
-    <div className="glass-panel" style={{  }}>
+    <div >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2 style={{ fontWeight: 600 }}>VIX Range Calculator</h2>
         <select 

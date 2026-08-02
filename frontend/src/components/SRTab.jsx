@@ -5,7 +5,7 @@ const SRTab = ({ stocks }) => {
   const srStocks = stocks.filter(stock => stock.sr != null);
 
   return (
-    <div className="glass-panel" style={{  }}>
+    <div >
       <h2 style={{ fontWeight: 600 }}>Support & Resistance Levels</h2>
       
       {srStocks.length === 0 ? (

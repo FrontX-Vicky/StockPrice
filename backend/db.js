@@ -102,6 +102,25 @@ function getCandles(symbol, interval, limit = 100) {
     });
 }
 
+/**
+ * Retrieve candles for a symbol and interval.
+ */
+function getCandles(symbol, interval) {
+    return new Promise((resolve, reject) => {
+        db.all(
+            `SELECT timestamp, open, high, low, close, volume 
+             FROM historical_candles 
+             WHERE symbol = ? AND interval = ?
+             ORDER BY timestamp ASC`,
+            [symbol, interval],
+            (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            }
+        );
+    });
+}
+
 module.exports = {
     db,
     dbInitPromise,

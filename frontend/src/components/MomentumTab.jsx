@@ -27,7 +27,7 @@ const MomentumTab = ({ stocks }) => {
   });
 
   return (
-    <div className="glass-panel">
+    <div >
       <div style={{  borderBottom: '1px solid var(--card-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2 style={{ fontWeight: 600 }}>Phase 3: Momentum Engine</h2>
         <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
@@ -107,7 +107,7 @@ const MomentumTab = ({ stocks }) => {
             
             {sortedStocks.length === 0 && (
                 <tr>
-                    <td colSpan="4" style={{ textAlign: 'center', , color: 'var(--text-muted)' }}>
+                    <td colSpan="4" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
                         Waiting for backend to finish calculating momentum stats...
                     </td>
                 </tr>

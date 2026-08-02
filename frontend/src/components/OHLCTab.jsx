@@ -8,7 +8,7 @@ const OHLCTab = ({ stocks }) => {
   });
 
   return (
-    <div className="glass-panel" style={{  }}>
+    <div >
       <h2 style={{ fontWeight: 600 }}>Open = High / Low Scanner</h2>
       
       {filteredStocks.length === 0 ? (

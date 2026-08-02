@@ -4,9 +4,7 @@ const MarketPulse = ({ indices }) => {
   return (
     <div className="market-pulse glass-panel" style={{ 
         display: 'flex', 
-        justifyContent: 'space-around', 
-        , 
-        flexWrap: 'wrap' }}>
+        justifyContent: 'space-around', flexWrap: 'wrap' }}>
       {indices.map(index => {
         const { symbol, price, close } = index;
         const changeValue = price - close;

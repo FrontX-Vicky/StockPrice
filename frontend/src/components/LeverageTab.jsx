@@ -28,13 +28,13 @@ const LeverageTab = () => {
   const isInvalid = targetPoint <= 0 || slPoint <= 0;
 
   return (
-    <div className="glass-panel" style={{  display: 'flex', flexWrap: 'wrap' }}>
+    <div className="glass-panel" style={{ padding: '16px', display: 'flex', flexWrap: 'wrap', gap: '24px' }}>
       
       {/* Input Form */}
       <div style={{ flex: '1 1 300px' }}>
-        <h2 style={{ fontWeight: 600 }}>Trade Setup</h2>
+        <h2 style={{ fontWeight: 600, marginBottom: '12px' }}>Trade Setup</h2>
         
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div className="input-group">
             <label style={{ color: 'var(--text-muted)', fontSize: '0.9rem', display: 'block' }}>Capital (₹)</label>
             <input 
@@ -84,10 +84,10 @@ const LeverageTab = () => {
       </div>
 
       {/* Dashboard Metrics */}
-      <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column' }}>
-        <h2 style={{ marginBottom: '0', fontWeight: 600 }}>Risk Dashboard</h2>
+      <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <h2 style={{ fontWeight: 600 }}>Risk Dashboard</h2>
         
-        <div style={{ background: 'rgba(255,255,255,0.05)', , border: '1px solid var(--card-border)' }}>
+        <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ color: 'var(--text-muted)' }}>Buying Power</span>
             <span style={{ fontWeight: 'bold' }}>₹ {buyingPower.toLocaleString('en-IN')}</span>
@@ -98,8 +98,8 @@ const LeverageTab = () => {
           </div>
         </div>
 
-        <div style={{ display: 'flex' }}>
-          <div style={{ flex: 1, background: 'rgba(16, 185, 129, 0.1)', , border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ flex: 1, background: 'rgba(46, 189, 133, 0.1)', border: '1px solid rgba(46, 189, 133, 0.2)', padding: '12px' }}>
             <div style={{ color: 'var(--accent-green)', fontWeight: 600 }}>Target Projection</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--accent-green)' }}>+ ₹{targetProfit > 0 ? targetProfit.toLocaleString('en-IN') : '0'}</div>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
@@ -107,7 +107,7 @@ const LeverageTab = () => {
             </div>
           </div>
 
-          <div style={{ flex: 1, background: 'rgba(239, 68, 68, 0.1)', , border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+          <div style={{ flex: 1, background: 'rgba(246, 70, 93, 0.1)', border: '1px solid rgba(246, 70, 93, 0.2)', padding: '12px' }}>
             <div style={{ color: 'var(--accent-red)', fontWeight: 600 }}>Max Risk (SL)</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--accent-red)' }}>- ₹{slLoss > 0 ? slLoss.toLocaleString('en-IN') : '0'}</div>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
@@ -117,10 +117,10 @@ const LeverageTab = () => {
         </div>
 
         <div style={{ 
-          background: isInvalid ? 'rgba(255,255,255,0.05)' : isFavorable ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)', 
-          , 
+          background: isInvalid ? 'var(--card-bg)' : isFavorable ? 'rgba(46, 189, 133, 0.15)' : 'rgba(246, 70, 93, 0.15)', 
           border: `1px solid ${isInvalid ? 'var(--card-border)' : isFavorable ? 'var(--accent-green)' : 'var(--accent-red)'}`,
-          textAlign: 'center'
+          textAlign: 'center',
+          padding: '16px'
         }}>
           <div style={{ color: isInvalid ? 'var(--text-muted)' : isFavorable ? 'var(--accent-green)' : 'var(--accent-red)', fontWeight: 600 }}>
             Risk : Reward Ratio
@@ -146,7 +146,9 @@ const inputStyle = {
   border: '1px solid var(--card-border)',
   color: 'var(--text-main)',
   outline: 'none',
-  fontSize: '1rem',
+  padding: '6px 8px',
+  marginTop: '4px',
+  fontSize: '14px',
   fontWeight: 500
 };
 

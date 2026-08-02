@@ -2,7 +2,7 @@ import React from 'react';
 
 const IntradayTab = ({ stocks }) => {
   return (
-    <div className="glass-panel" style={{  }}>
+    <div >
       <h2 style={{ fontWeight: 600 }}>Intraday Alert (3-Min EMA)</h2>
       
       <div className="data-table-wrapper">

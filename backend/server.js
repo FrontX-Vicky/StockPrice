@@ -327,8 +327,21 @@ wss.on('connection', (ws) => {
     ws.send(JSON.stringify({ type: 'sync_status', isComplete: isHistoricalSyncComplete }));
 });
 
+app.get('/api/historical/:symbol', async (req, res) => {
+    try {
+        const symbol = req.params.symbol;
+        const interval = req.query.interval || 'ONE_DAY';
+        const { getCandles } = require('./db');
+        const data = await getCandles(symbol, interval);
+        res.json({ success: true, data });
+    } catch (err) {
+        console.error("Error fetching historical data:", err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 app.get('/health', (req, res) => {
-    res.json({ status: 'ok', message: 'Backend is running' });
+    res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
 server.listen(PORT, () => {

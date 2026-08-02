@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import StockRow from './StockRow';
 import OHLCTab from './OHLCTab';
 import SRTab from './SRTab';
 import TrendTab from './TrendTab';
@@ -10,12 +9,15 @@ import VixTab from './VixTab';
 import LeverageTab from './LeverageTab';
 import OptionsRangeTab from './OptionsRangeTab';
 import MomentumTab from './MomentumTab';
+import WatchlistSidebar from './WatchlistSidebar';
+import ChartTab from './ChartTab';
 
 const Dashboard = () => {
   const [stocksMap, setStocksMap] = useState({});
   const [isLive, setIsLive] = useState(false);
-  const [mainTab, setMainTab] = useState('Momentum');
+  const [mainTab, setMainTab] = useState('Chart');
   const [activeTab, setActiveTab] = useState('NSE'); // 'NSE' or 'NFO'
+  const [selectedStock, setSelectedStock] = useState(null);
   
   // System Boot State
   const [syncProgress, setSyncProgress] = useState(null); // { current, total }
@@ -73,28 +75,17 @@ const Dashboard = () => {
     .sort((a, b) => a.symbol.localeCompare(b.symbol));
 
   return (
-    <div className="container">
-      <header className="header">
-        <h1>Advanced Market Alerts</h1>
-        <div className="live-indicator">
-          <div className={`live-dot ${!isLive ? 'paused' : ''}`}></div>
-          {isLive ? 'Live Updates (Angel One)' : 'Connecting...'}
-        </div>
-      </header>
-
-      {/* Persistent Market Pulse Ticker */}
-      <MarketPulse indices={indexStocks} />
-
+    <div className="app-layout">
+      
       {/* BOOT OVERLAY */}
       {isSyncing && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
-          background: 'rgba(15, 23, 42, 0.95)', zIndex: 9999, 
-          display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
-          backdropFilter: 'blur(10px)'
+          background: 'rgba(19, 23, 34, 0.95)', zIndex: 9999, 
+          display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'
         }}>
           <div className="glass-panel" style={{ textAlign: 'center', maxWidth: '500px' }}>
-            <h2 style={{ color: 'var(--text-main)' }}>System Booting</h2>
+            <h2 style={{ color: 'var(--text-main)', marginBottom: '16px' }}>System Booting</h2>
             <p style={{ color: 'var(--text-muted)' }}>
               Fetching Daily, 3-Min, and 5-Min historical candles to calculate 60-Day Momentum metrics. 
               <br/><br/>
@@ -102,139 +93,133 @@ const Dashboard = () => {
             </p>
             
             {syncProgress ? (
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+              <div style={{ marginTop: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '8px' }}>
                   <span>Syncing F&O Stocks</span>
                   <span>{syncProgress.current} / {syncProgress.total}</span>
                 </div>
-                <div style={{ width: '100%', height: '8px', background: 'var(--card-bg)', overflow: 'hidden' }}>
+                <div style={{ width: '100%', height: '8px', background: 'var(--card-bg)', overflow: 'hidden', borderRadius: '4px' }}>
                   <div style={{ 
                     height: '100%', 
-                    background: 'var(--accent-green)', 
+                    background: 'var(--accent-blue)', 
                     width: `${(syncProgress.current / syncProgress.total) * 100}%`,
                     transition: 'width 0.3s ease'
                   }}></div>
                 </div>
-                <p style={{ fontSize: '0.85rem', color: '#3b82f6' }}>Estimated time remaining: {Math.max(0, Math.ceil((syncProgress.total - syncProgress.current) * 1.05))}s</p>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px' }}>Estimated time remaining: {Math.max(0, Math.ceil((syncProgress.total - syncProgress.current) * 1.05))}s</p>
               </div>
             ) : (
-              <div style={{ color: 'var(--accent-green)' }}>Initializing historical queue...</div>
+              <div style={{ color: 'var(--accent-blue)', marginTop: '24px' }}>Initializing historical queue...</div>
             )}
           </div>
         </div>
       )}
 
+      {/* Top Bar Pane */}
+      <div className="top-bar-pane">
+        <header className="header">
+          <h1>Advanced Market Alerts</h1>
+          <div className="live-indicator">
+            <div className={`live-dot ${!isLive ? 'paused' : ''}`}></div>
+            {isLive ? 'Live Updates (Angel One)' : 'Connecting...'}
+          </div>
+        </header>
+        <MarketPulse indices={indexStocks} />
+      </div>
+
       {!isSyncing && (
         <>
-
-          <div className="main-nav">
-            <button 
-              className={`main-tab-btn ${mainTab === 'Watchlist' ? 'active' : ''}`}
-              onClick={() => setMainTab('Watchlist')}
-            >
-              Watchlist
-            </button>
-            <button 
-              className={`main-tab-btn ${mainTab === 'OHLC' ? 'active' : ''}`}
-              onClick={() => setMainTab('OHLC')}
-            >
-              Open=High/Low
-            </button>
-            <button 
-              className={`main-tab-btn ${mainTab === 'SR' ? 'active' : ''}`}
-              onClick={() => setMainTab('SR')}
-            >
-              Support & Resistance
-            </button>
-            <button 
-              className={`main-tab-btn ${mainTab === 'Indices' ? 'active' : ''}`}
-              onClick={() => setMainTab('Indices')}
-            >
-              Indices S/R
-            </button>
-            <button 
-              className={`main-tab-btn ${mainTab === 'VIX' ? 'active' : ''}`}
-              onClick={() => setMainTab('VIX')}
-            >
-              VIX Range Calc
-            </button>
-            <button 
-              className={`main-tab-btn ${mainTab === 'Leverage' ? 'active' : ''}`}
-              onClick={() => setMainTab('Leverage')}
-            >
-              Risk Calculator
-            </button>
-            <button 
-              className={`main-tab-btn ${mainTab === 'OptionsRange' ? 'active' : ''}`}
-              onClick={() => setMainTab('OptionsRange')}
-            >
-              Options Range
-            </button>
-            <button 
-              className={`main-tab-btn ${mainTab === 'Momentum' ? 'active' : ''}`}
-              onClick={() => setMainTab('Momentum')}
-            >
-              Momentum Engine
-            </button>
-            <button 
-              className={`main-tab-btn ${mainTab === 'Trend' ? 'active' : ''}`}
-              onClick={() => setMainTab('Trend')}
-            >
-              Stock Trend
-            </button>
-            <button 
-              className={`main-tab-btn ${mainTab === 'Intraday' ? 'active' : ''}`}
-              onClick={() => setMainTab('Intraday')}
-            >
-              Intraday (3-Min)
-            </button>
+          {/* Left Sidebar Pane (Watchlist) */}
+          <div className="sidebar-pane">
+            <WatchlistSidebar 
+              stocksMap={stocksMap} 
+              selectedStock={selectedStock}
+              onSelectStock={(sym) => {
+                setSelectedStock(sym);
+                setMainTab('Chart');
+              }} 
+            />
           </div>
 
-          <div className="tab-content">
-            {mainTab === 'Watchlist' && (
-              <div className="watchlist-container glass-panel">
-                <div className="watchlist-tabs">
-                  <button 
-                    className={`tab-btn ${activeTab === 'NSE' ? 'active' : ''}`} 
-                    onClick={() => setActiveTab('NSE')}
-                  >
-                    Cash (NSE)
-                  </button>
-                  <button 
-                    className={`tab-btn ${activeTab === 'NFO' ? 'active' : ''}`} 
-                    onClick={() => setActiveTab('NFO')}
-                  >
-                    F&O (NFO)
-                  </button>
-                </div>
+          {/* Main Content Pane */}
+          <div className="main-pane">
+            <div className="main-nav">
+              <button 
+                className={`main-tab-btn ${mainTab === 'Chart' ? 'active' : ''}`}
+                onClick={() => setMainTab('Chart')}
+              >
+                Chart
+              </button>
+              <button 
+                className={`main-tab-btn ${mainTab === 'OHLC' ? 'active' : ''}`}
+                onClick={() => setMainTab('OHLC')}
+              >
+                Open=High/Low
+              </button>
+              <button 
+                className={`main-tab-btn ${mainTab === 'SR' ? 'active' : ''}`}
+                onClick={() => setMainTab('SR')}
+              >
+                Support & Resistance
+              </button>
+              <button 
+                className={`main-tab-btn ${mainTab === 'Indices' ? 'active' : ''}`}
+                onClick={() => setMainTab('Indices')}
+              >
+                Indices S/R
+              </button>
+              <button 
+                className={`main-tab-btn ${mainTab === 'VIX' ? 'active' : ''}`}
+                onClick={() => setMainTab('VIX')}
+              >
+                VIX Range Calc
+              </button>
+              <button 
+                className={`main-tab-btn ${mainTab === 'Leverage' ? 'active' : ''}`}
+                onClick={() => setMainTab('Leverage')}
+              >
+                Risk Calculator
+              </button>
+              <button 
+                className={`main-tab-btn ${mainTab === 'OptionsRange' ? 'active' : ''}`}
+                onClick={() => setMainTab('OptionsRange')}
+              >
+                Options Range
+              </button>
+              <button 
+                className={`main-tab-btn ${mainTab === 'Momentum' ? 'active' : ''}`}
+                onClick={() => setMainTab('Momentum')}
+              >
+                Momentum Engine
+              </button>
+              <button 
+                className={`main-tab-btn ${mainTab === 'Trend' ? 'active' : ''}`}
+                onClick={() => setMainTab('Trend')}
+              >
+                Stock Trend
+              </button>
+              <button 
+                className={`main-tab-btn ${mainTab === 'Intraday' ? 'active' : ''}`}
+                onClick={() => setMainTab('Intraday')}
+              >
+                Intraday (3-Min)
+              </button>
+            </div>
 
-                <div className="watchlist-search">
-                   <input type="text" placeholder={`Search ${activeTab} Scrips`} disabled />
-                </div>
-                
-                <div className="watchlist-list">
-                  {displayStocks.map((stock) => (
-                    <StockRow
-                      key={stock.symbol}
-                      stock={stock}
-                    />
-                  ))}
-                  {displayStocks.length === 0 && (
-                     <div style={{  textAlign: 'center', color: '#94a3b8'}}>Waiting for market data...</div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {mainTab === 'OHLC' && <OHLCTab stocks={displayStocks} />}
-            {mainTab === 'SR' && <SRTab stocks={displayStocks} />}
-            {mainTab === 'Indices' && <IndexTab indices={indexStocks} />}
-            {mainTab === 'VIX' && <VixTab indices={indexStocks} />}
-            {mainTab === 'Leverage' && <LeverageTab />}
-            {mainTab === 'OptionsRange' && <OptionsRangeTab indices={indexStocks} />}
-            {mainTab === 'Momentum' && <MomentumTab stocks={Object.values(stocksMap).filter(s => s.exchange === 'NSE')} />}
-            {mainTab === 'Trend' && <TrendTab stocks={displayStocks} />}
-            {mainTab === 'Intraday' && <IntradayTab stocks={displayStocks} />}
+            <div className="tab-content" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+              {mainTab === 'Chart' && (
+                <ChartTab selectedStock={selectedStock} stockData={selectedStock ? stocksMap[selectedStock] : null} />
+              )}
+              {mainTab === 'OHLC' && <OHLCTab stocks={displayStocks} />}
+              {mainTab === 'SR' && <SRTab stocks={displayStocks} />}
+              {mainTab === 'Trend' && <TrendTab stocks={Object.values(stocksMap).filter(s => s.exchange === 'NSE')} />}
+              {mainTab === 'Intraday' && <IntradayTab stocks={Object.values(stocksMap).filter(s => s.exchange === 'NSE')} />}
+              {mainTab === 'Indices' && <IndexTab indices={indexStocks} />}
+              {mainTab === 'VIX' && <VixTab indices={indexStocks} />}
+              {mainTab === 'Leverage' && <LeverageTab />}
+              {mainTab === 'OptionsRange' && <OptionsRangeTab indices={indexStocks} />}
+              {mainTab === 'Momentum' && <MomentumTab stocks={Object.values(stocksMap).filter(s => s.exchange === 'NSE')} />}
+            </div>
           </div>
         </>
       )}

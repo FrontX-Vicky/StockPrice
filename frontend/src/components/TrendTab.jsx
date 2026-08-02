@@ -2,7 +2,7 @@ import React from 'react';
 
 const TrendTab = ({ stocks }) => {
   return (
-    <div className="glass-panel" style={{  }}>
+    <div >
       <h2 style={{ fontWeight: 600 }}>Stock Trend (Daily EMAs)</h2>
       
       <div className="data-table-wrapper">

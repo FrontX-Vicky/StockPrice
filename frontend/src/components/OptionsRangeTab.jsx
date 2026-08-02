@@ -36,7 +36,7 @@ const OptionsRangeTab = ({ indices }) => {
   const weeklyBands = calculateBands(weeklyBase);
 
   return (
-    <div className="glass-panel" style={{  }}>
+    <div >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
         <h2 style={{ fontWeight: 600 }}>Options Weekly Range Calculator</h2>
         
@@ -73,7 +73,7 @@ const OptionsRangeTab = ({ indices }) => {
         </div>
       </div>
 
-      <div style={{ background: 'rgba(255,255,255,0.05)', , border: '1px solid var(--card-border)', display: 'flex', justifyContent: 'space-around' }}>
+      <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--card-border)', display: 'flex', justifyContent: 'space-around' }}>
         <div>
            <span style={{ color: 'var(--text-muted)' }}>Combined Premium Sum:</span> 
            <strong style={{ fontSize: '1.2rem', marginLeft: '0.5rem', color: '#3b82f6' }}>{sum.toFixed(2)} pts</strong>
