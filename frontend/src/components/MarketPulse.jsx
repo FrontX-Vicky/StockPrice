@@ -12,11 +12,11 @@ const MarketPulse = ({ indices }) => {
         const isUp = changeValue >= 0;
         
         return (
-          <div key={symbol} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div key={symbol} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '220px', flex: '1 1 0' }}>
             <span style={{ fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '4px' }}>
                 {symbol.replace(/_/g, ' ')}
             </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums' }}>
               <span style={{ fontWeight: 'bold', fontSize: '1.2rem', color: 'var(--text-main)' }}>
                   {price > 0 ? price.toFixed(2) : '-'}
               </span>
