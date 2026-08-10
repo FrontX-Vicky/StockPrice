@@ -77,8 +77,14 @@ const ChartTab = ({ selectedStock, stockData }) => {
         const data = await res.json();
         
         if (data.success && data.data) {
+          // If intraday, user requested to ONLY see today's data
+          const todayStr = new Date().toLocaleDateString('en-CA');
+          const filteredRawData = interval === 'ONE_DAY' 
+            ? data.data 
+            : data.data.filter(d => new Date(d.timestamp).toLocaleDateString('en-CA') === todayStr);
+
           // lightweight-charts needs data sorted by time, ascending
-          const formattedData = data.data.map(d => {
+          const formattedData = filteredRawData.map(d => {
             const dateObj = new Date(d.timestamp);
             let timeValue;
             
@@ -87,8 +93,8 @@ const ChartTab = ({ selectedStock, stockData }) => {
               timeValue = dateObj.toLocaleDateString('en-CA'); // 'YYYY-MM-DD' format
             } else {
               // Intraday needs UNIX timestamp (seconds) in UTC. 
-              // Lightweight charts handles local timezone display automatically.
-              timeValue = Math.floor(dateObj.getTime() / 1000);
+              // To force TradingView to display IST, we add the offset (19800).
+              timeValue = Math.floor(dateObj.getTime() / 1000) + 19800;
             }
 
             return {
@@ -155,10 +161,11 @@ const ChartTab = ({ selectedStock, stockData }) => {
            // Local YYYY-MM-DD
            currentCandleTime = now.toLocaleDateString('en-CA');
        } else if (interval === 'FIVE_MINUTE') {
-           // Floor to nearest 5 minutes in Unix seconds
-           currentCandleTime = Math.floor(now.getTime() / (5 * 60 * 1000)) * (5 * 60);
+           // Floor to nearest 5 minutes in Unix seconds, then add IST offset (19800)
+           currentCandleTime = (Math.floor(now.getTime() / (5 * 60 * 1000)) * (5 * 60)) + 19800;
        } else if (interval === 'THREE_MINUTE') {
-           currentCandleTime = Math.floor(now.getTime() / (3 * 60 * 1000)) * (3 * 60);
+           // Floor to nearest 3 minutes in Unix seconds, then add IST offset (19800)
+           currentCandleTime = (Math.floor(now.getTime() / (3 * 60 * 1000)) * (3 * 60)) + 19800;
        }
 
        // If the last candle belongs to the current time period, update it.
