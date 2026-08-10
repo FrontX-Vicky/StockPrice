@@ -50,21 +50,41 @@ async function fetchHistoricalSafely(smart_api, symbol, token, exchange, interva
         return; // Data is fresh enough
     }
 
-    try {
-        const payload = {
-            exchange: exchange,
-            symboltoken: token,
-            interval: interval,
-            fromdate: formatDate(fromDate),
-            todate: formatDate(toDate)
-        };
-        
-        const response = await smart_api.getCandleData(payload);
-        if (response && response.status && response.data) {
-            await db.insertCandles(symbol, interval, response.data);
+    let attempts = 0;
+    const maxAttempts = 3;
+
+    while (attempts < maxAttempts) {
+        try {
+            const payload = {
+                exchange: exchange,
+                symboltoken: token,
+                interval: interval,
+                fromdate: formatDate(fromDate),
+                todate: formatDate(toDate)
+            };
+            
+            const response = await smart_api.getCandleData(payload);
+            
+            if (response && response.status && response.data) {
+                await db.insertCandles(symbol, interval, response.data);
+                return; // Success, exit retry loop
+            } else if (response && response.message && response.message.toLowerCase().includes('rate')) {
+                // Rate limit reached, force a retry
+                throw new Error("Rate limit exceeded: " + response.message);
+            } else {
+                // Some other failure, break out
+                console.error(`Unexpected response for ${symbol} (${interval}):`, response);
+                break; 
+            }
+        } catch (err) {
+            attempts++;
+            if (attempts >= maxAttempts) {
+                console.error(`Failed to fetch historical for ${symbol} (${interval}) after ${maxAttempts} attempts:`, err.message);
+            } else {
+                // Wait for 2 seconds before retrying to clear the rate limit window
+                await new Promise(res => setTimeout(res, 2000));
+            }
         }
-    } catch (err) {
-        console.error(`Error fetching historical for ${symbol} (${interval}):`, err.message);
     }
 }
 
