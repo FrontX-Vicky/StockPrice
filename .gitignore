@@ -36,3 +36,4 @@ yarn-error.log*
 *.sw?
 backend/data/*
 *.db
+backend/error.log

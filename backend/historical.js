@@ -65,12 +65,12 @@ async function fetchHistoricalSafely(smart_api, symbol, token, exchange, interva
             
             const response = await smart_api.getCandleData(payload);
             
-            if (response && response.status && response.data) {
+            if (response && response.status === true && response.data) {
                 await db.insertCandles(symbol, interval, response.data);
                 return; // Success, exit retry loop
-            } else if (response && response.message && response.message.toLowerCase().includes('rate')) {
-                // Rate limit reached, force a retry
-                throw new Error("Rate limit exceeded: " + response.message);
+            } else if (response && (response.status === 403 || response.status === 429 || (response.message && response.message.toLowerCase().includes('rate')) || response.status === false)) {
+                // Rate limit reached or generic SDK error (SDK returns 403 with empty message on WAF block)
+                throw new Error(`Rate limit/API error (Status: ${response.status}): ${response.message || 'Access denied'}`);
             } else {
                 // Some other failure, break out
                 console.error(`Unexpected response for ${symbol} (${interval}):`, response);
@@ -81,8 +81,8 @@ async function fetchHistoricalSafely(smart_api, symbol, token, exchange, interva
             if (attempts >= maxAttempts) {
                 console.error(`Failed to fetch historical for ${symbol} (${interval}) after ${maxAttempts} attempts:`, err.message);
             } else {
-                // Wait for 2 seconds before retrying to clear the rate limit window
-                await new Promise(res => setTimeout(res, 2000));
+                // Wait for 5 seconds before retrying to let the WAF unblock the IP
+                await new Promise(res => setTimeout(res, 5000));
             }
         }
     }
@@ -105,15 +105,15 @@ async function syncAllHistoricalData(smart_api, tokens, fnoTokens, indexTokens, 
         
         // Fetch Daily
         await fetchHistoricalSafely(smart_api, stock.symbol, stock.token, stock.exchange, 'ONE_DAY');
-        await delay(350); // Rate limit buffer (~3 req/sec)
+        await delay(1000); // Rate limit buffer (~1 req/sec)
+
+        // Fetch 5-Min for Momentum Phase 3 rule
+        await fetchHistoricalSafely(smart_api, stock.symbol, stock.token, stock.exchange, 'FIVE_MINUTE');
+        await delay(1000); 
 
         // Fetch 3-Min for Intraday tab
         await fetchHistoricalSafely(smart_api, stock.symbol, stock.token, stock.exchange, 'THREE_MINUTE');
-        await delay(350);
-        
-        // Fetch 5-Min for Momentum Phase 3 rule
-        await fetchHistoricalSafely(smart_api, stock.symbol, stock.token, stock.exchange, 'FIVE_MINUTE');
-        await delay(350);
+        await delay(1000);
         
         if (progressCallback && i % 5 === 0) {
             progressCallback(i + 1, allStocks.length);
