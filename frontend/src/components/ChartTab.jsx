@@ -5,7 +5,7 @@ const ChartTab = ({ selectedStock, stockData }) => {
   const chartContainerRef = useRef();
   const chartRef = useRef();
   const seriesRef = useRef();
-  const [interval, setInterval] = useState('ONE_DAY'); // 'ONE_DAY', 'FIVE_MINUTE', 'THREE_MINUTE'
+  const [interval, setInterval] = useState('FIVE_MINUTE'); // 'ONE_DAY', 'FIVE_MINUTE', 'THREE_MINUTE'
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -42,6 +42,29 @@ const ChartTab = ({ selectedStock, stockData }) => {
       wickDownColor: '#ef5350',
     });
 
+    // Draw Support & Resistance lines for Intraday charts
+    if (interval !== 'ONE_DAY' && stockData && stockData.sr) {
+        const { s1, s2, s3, r1, r2, r3 } = stockData.sr;
+        
+        const addPriceLine = (price, color, title) => {
+            candleSeries.createPriceLine({
+                price: price,
+                color: color,
+                lineWidth: 1,
+                lineStyle: 2, // Dashed
+                axisLabelVisible: true,
+                title: title,
+            });
+        };
+
+        if (s1) addPriceLine(s1, '#ef4444', 'S1');
+        if (s2) addPriceLine(s2, '#ef4444', 'S2');
+        if (s3) addPriceLine(s3, '#ef4444', 'S3');
+        if (r1) addPriceLine(r1, '#22c55e', 'R1');
+        if (r2) addPriceLine(r2, '#22c55e', 'R2');
+        if (r3) addPriceLine(r3, '#22c55e', 'R3');
+    }
+
     chartRef.current = chart;
     seriesRef.current = candleSeries;
 
@@ -63,8 +86,9 @@ const ChartTab = ({ selectedStock, stockData }) => {
               // Extract YYYY-MM-DD in local time
               timeValue = dateObj.toLocaleDateString('en-CA'); // 'YYYY-MM-DD' format
             } else {
-              // Intraday needs UNIX timestamp (seconds)
-              timeValue = Math.floor(dateObj.getTime() / 1000) + 19800; // +5:30 IST offset
+              // Intraday needs UNIX timestamp (seconds) in UTC. 
+              // Lightweight charts handles local timezone display automatically.
+              timeValue = Math.floor(dateObj.getTime() / 1000);
             }
 
             return {
@@ -124,18 +148,44 @@ const ChartTab = ({ selectedStock, stockData }) => {
        const lastCandle = currentData[currentData.length - 1];
        const currentPrice = stockData.price;
        
-       // Formulate the updated live candle
-       const updatedCandle = {
-           time: lastCandle.time,
-           open: lastCandle.open,
-           high: Math.max(lastCandle.high, currentPrice),
-           low: Math.min(lastCandle.low, currentPrice),
-           close: currentPrice
-       };
+       const now = new Date();
+       let currentCandleTime;
        
-       seriesRef.current.update(updatedCandle);
+       if (interval === 'ONE_DAY') {
+           // Local YYYY-MM-DD
+           currentCandleTime = now.toLocaleDateString('en-CA');
+       } else if (interval === 'FIVE_MINUTE') {
+           // Floor to nearest 5 minutes in Unix seconds
+           currentCandleTime = Math.floor(now.getTime() / (5 * 60 * 1000)) * (5 * 60);
+       } else if (interval === 'THREE_MINUTE') {
+           currentCandleTime = Math.floor(now.getTime() / (3 * 60 * 1000)) * (3 * 60);
+       }
+
+       // If the last candle belongs to the current time period, update it.
+       if (lastCandle.time === currentCandleTime) {
+           seriesRef.current.update({
+               time: lastCandle.time,
+               open: lastCandle.open,
+               high: Math.max(lastCandle.high, currentPrice),
+               low: Math.min(lastCandle.low, currentPrice),
+               close: currentPrice
+           });
+       } else {
+           // If the last candle is from an older period (or a previous day entirely!), 
+           // we MUST create a new candle for the current timeframe.
+           // For daily, we can use the day's open/high/low from stockData. 
+           // For intraday, we just start a new candle from the current price.
+           const isDaily = interval === 'ONE_DAY';
+           seriesRef.current.update({
+               time: currentCandleTime,
+               open: isDaily ? stockData.open : currentPrice,
+               high: isDaily ? stockData.high : currentPrice,
+               low: isDaily ? stockData.low : currentPrice,
+               close: currentPrice
+           });
+       }
     }
-  }, [stockData]);
+  }, [stockData, interval]);
 
   if (!selectedStock) {
     return (
@@ -156,6 +206,11 @@ const ChartTab = ({ selectedStock, stockData }) => {
           <span style={{ fontSize: '14px', color: stockData?.change > 0 ? 'var(--accent-green)' : 'var(--accent-red)' }}>
             ₹{stockData?.price || 0}
           </span>
+          {interval !== 'ONE_DAY' && stockData?.sr?.strikeGap && (
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '4px' }}>
+              GAP: {stockData.sr.strikeGap.toFixed(2)}
+            </span>
+          )}
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           {['ONE_DAY', 'FIVE_MINUTE', 'THREE_MINUTE'].map(intv => (

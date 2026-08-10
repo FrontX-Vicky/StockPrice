@@ -18,6 +18,7 @@ const SRTab = ({ stocks }) => {
             <thead>
               <tr>
                 <th>Symbol</th>
+                <th>Open</th>
                 <th>LTP</th>
                 <th>S3</th>
                 <th>S2</th>
@@ -30,10 +31,11 @@ const SRTab = ({ stocks }) => {
             </thead>
             <tbody>
               {srStocks.map(stock => {
-                const { sr, price } = stock;
+                const { sr, price, open } = stock;
                 return (
                   <tr key={stock.symbol}>
                     <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>{stock.symbol}</td>
+                    <td style={{ color: 'var(--text-main)' }}>{open ? open.toFixed(2) : '-'}</td>
                     <td style={{ fontWeight: 'bold', color: '#3b82f6' }}>{price.toFixed(2)}</td>
                     <td>{sr.s3.toFixed(2)}</td>
                     <td>{sr.s2.toFixed(2)}</td>

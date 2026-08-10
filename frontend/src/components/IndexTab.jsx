@@ -18,6 +18,7 @@ const IndexTab = ({ indices }) => {
             <thead>
               <tr>
                 <th>Index</th>
+                <th>Open</th>
                 <th>LTP</th>
                 <th>S3</th>
                 <th>S2</th>
@@ -30,10 +31,11 @@ const IndexTab = ({ indices }) => {
             </thead>
             <tbody>
               {srIndices.map(index => {
-                const { sr, price, symbol } = index;
+                const { sr, price, symbol, open } = index;
                 return (
                   <tr key={symbol}>
                     <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>{symbol.replace(/_/g, ' ')}</td>
+                    <td style={{ color: 'var(--text-main)' }}>{open ? open.toFixed(2) : '-'}</td>
                     <td style={{ fontWeight: 'bold', color: '#3b82f6' }}>{price.toFixed(2)}</td>
                     <td>{sr.s3.toFixed(2)}</td>
                     <td>{sr.s2.toFixed(2)}</td>

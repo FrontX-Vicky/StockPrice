@@ -264,6 +264,10 @@ function connectSmartApiWebsocket(jwttoken, feedtoken) {
                 const low = data.low_price_day ? data.low_price_day / 100 : latestPrices[symbol].low;
                 let close = data.close_price ? data.close_price / 100 : latestPrices[symbol].close;
                 
+                // VWAP & Volume
+                const vwap = data.average_traded_price ? data.average_traded_price / 100 : latestPrices[symbol].vwap;
+                const volume = data.volume_traded_today ? data.volume_traded_today : latestPrices[symbol].volume;
+                
                 // If Angel One doesn't provide a previous close, simulate one initially to show red/green
                 if (close === 0 && price > 0) {
                     const mockOffset = price * (Math.random() * 0.02 - 0.01); // +/- 1%
@@ -278,9 +282,18 @@ function connectSmartApiWebsocket(jwttoken, feedtoken) {
                 latestPrices[symbol].open = open;
                 latestPrices[symbol].high = high;
                 latestPrices[symbol].low = low;
+                latestPrices[symbol].vwap = vwap;
+                latestPrices[symbol].volume = volume;
                 // keep exchange info intact
-                
                 latestPrices[symbol].exchange = exchange;
+
+                // Process intraday stateful tracking (O=H/L, etc)
+                try {
+                    const { processTick } = require('./scanner');
+                    processTick(symbol, latestPrices[symbol]);
+                } catch (e) {
+                    console.error("Scanner tracking error:", e);
+                }
 
                 // Broadcast to all connected frontend clients
                 broadcastToClients();
@@ -336,6 +349,18 @@ app.get('/api/historical/:symbol', async (req, res) => {
         res.json({ success: true, data });
     } catch (err) {
         console.error("Error fetching historical data:", err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.get('/api/scanners/:date', async (req, res) => {
+    try {
+        const { getScannerLogs } = require('./db');
+        const date = req.params.date; // YYYY-MM-DD
+        const logs = await getScannerLogs(date);
+        res.json({ success: true, data: logs });
+    } catch (err) {
+        console.error("Error fetching scanner logs:", err);
         res.status(500).json({ success: false, error: err.message });
     }
 });

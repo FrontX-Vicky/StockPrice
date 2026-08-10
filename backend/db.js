@@ -29,8 +29,22 @@ const dbInitPromise = new Promise((resolve, reject) => {
             volume REAL,
             PRIMARY KEY (symbol, interval, timestamp)
         )`, (err) => {
-            if (err) reject(err);
-            else resolve();
+            if (err) return reject(err);
+        });
+
+        // Create table for tracking intraday scanners (O=H/L, Volume, etc)
+        db.run(`CREATE TABLE IF NOT EXISTS scanner_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT,
+            symbol TEXT,
+            type TEXT,
+            detected_at TEXT,
+            broken_at TEXT,
+            status TEXT,
+            details TEXT
+        )`, (err) => {
+            if (err) return reject(err);
+            resolve();
         });
     });
 });
@@ -121,10 +135,68 @@ function getCandles(symbol, interval) {
     });
 }
 
+/**
+ * Fetch scanner logs for a specific date
+ */
+function getScannerLogs(date) {
+    return new Promise((resolve, reject) => {
+        db.all(
+            `SELECT * FROM scanner_logs WHERE date = ? ORDER BY detected_at DESC`,
+            [date],
+            (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows || []);
+            }
+        );
+    });
+}
+
+/**
+ * Upsert a scanner log. If it exists for the same date, symbol, and type, just update if needed.
+ */
+function upsertScannerLog(date, symbol, type, detected_at, status, details) {
+    return new Promise((resolve, reject) => {
+        db.get(
+            `SELECT id, status FROM scanner_logs WHERE date = ? AND symbol = ? AND type = ?`,
+            [date, symbol, type],
+            (err, row) => {
+                if (err) return reject(err);
+                
+                if (row) {
+                    // Update only if status changed (e.g. from ACTIVE to BROKEN)
+                    if (row.status !== status) {
+                        const broken_at = status === 'BROKEN' ? new Date().toISOString() : null;
+                        db.run(
+                            `UPDATE scanner_logs SET status = ?, broken_at = ?, details = ? WHERE id = ?`,
+                            [status, broken_at, details, row.id],
+                            (err) => err ? reject(err) : resolve(row.id)
+                        );
+                    } else {
+                        resolve(row.id);
+                    }
+                } else {
+                    // Insert new log
+                    db.run(
+                        `INSERT INTO scanner_logs (date, symbol, type, detected_at, broken_at, status, details) 
+                         VALUES (?, ?, ?, ?, NULL, ?, ?)`,
+                        [date, symbol, type, detected_at, status, details],
+                        function(err) {
+                            if (err) reject(err);
+                            else resolve(this.lastID);
+                        }
+                    );
+                }
+            }
+        );
+    });
+}
+
 module.exports = {
     db,
     dbInitPromise,
     insertCandles,
     getLastFetchedTimestamp,
-    getCandles
+    getCandles,
+    getScannerLogs,
+    upsertScannerLog
 };
