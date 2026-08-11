@@ -77,11 +77,12 @@ const ChartTab = ({ selectedStock, stockData }) => {
         const data = await res.json();
         
         if (data.success && data.data) {
-          // If intraday, user requested to ONLY see today's data
-          const todayStr = new Date().toLocaleDateString('en-CA');
-          const filteredRawData = interval === 'ONE_DAY' 
-            ? data.data 
-            : data.data.filter(d => new Date(d.timestamp).toLocaleDateString('en-CA') === todayStr);
+          // For intraday, we only want to show the most recent day's data available in the dataset
+          let filteredRawData = data.data;
+          if (interval !== 'ONE_DAY' && data.data.length > 0) {
+            const lastCandleDate = new Date(data.data[data.data.length - 1].timestamp).toLocaleDateString('en-CA');
+            filteredRawData = data.data.filter(d => new Date(d.timestamp).toLocaleDateString('en-CA') === lastCandleDate);
+          }
 
           // lightweight-charts needs data sorted by time, ascending
           const formattedData = filteredRawData.map(d => {
@@ -93,8 +94,8 @@ const ChartTab = ({ selectedStock, stockData }) => {
               timeValue = dateObj.toLocaleDateString('en-CA'); // 'YYYY-MM-DD' format
             } else {
               // Intraday needs UNIX timestamp (seconds) in UTC. 
-              // To force TradingView to display IST, we add the offset (19800).
-              timeValue = Math.floor(dateObj.getTime() / 1000) + 19800;
+              // Lightweight charts natively formats this to the local browser timezone (IST).
+              timeValue = Math.floor(dateObj.getTime() / 1000);
             }
 
             return {
@@ -161,11 +162,11 @@ const ChartTab = ({ selectedStock, stockData }) => {
            // Local YYYY-MM-DD
            currentCandleTime = now.toLocaleDateString('en-CA');
        } else if (interval === 'FIVE_MINUTE') {
-           // Floor to nearest 5 minutes in Unix seconds, then add IST offset (19800)
-           currentCandleTime = (Math.floor(now.getTime() / (5 * 60 * 1000)) * (5 * 60)) + 19800;
+           // Floor to nearest 5 minutes in Unix seconds
+           currentCandleTime = Math.floor(now.getTime() / (5 * 60 * 1000)) * (5 * 60);
        } else if (interval === 'THREE_MINUTE') {
-           // Floor to nearest 3 minutes in Unix seconds, then add IST offset (19800)
-           currentCandleTime = (Math.floor(now.getTime() / (3 * 60 * 1000)) * (3 * 60)) + 19800;
+           // Floor to nearest 3 minutes in Unix seconds
+           currentCandleTime = Math.floor(now.getTime() / (3 * 60 * 1000)) * (3 * 60);
        }
 
        // If the last candle belongs to the current time period, update it.
@@ -178,11 +179,29 @@ const ChartTab = ({ selectedStock, stockData }) => {
                close: currentPrice
            });
        } else {
-           // If the last candle is from an older period (or a previous day entirely!), 
-           // we MUST create a new candle for the current timeframe.
-           // For daily, we can use the day's open/high/low from stockData. 
-           // For intraday, we just start a new candle from the current price.
+           // If the last candle is from an older period...
            const isDaily = interval === 'ONE_DAY';
+           
+           // If intraday, check if the live tick is on a completely different day than the historical data.
+           // If so, the historical data is stale (e.g. from yesterday), so we should start a fresh chart for today!
+           if (!isDaily) {
+               const lastCandleDateStr = new Date(lastCandle.time * 1000).toLocaleDateString('en-CA');
+               const currentCandleDateStr = new Date(currentCandleTime * 1000).toLocaleDateString('en-CA');
+               
+               if (lastCandleDateStr !== currentCandleDateStr) {
+                   // Market rolled over to a new day, clear stale historical data from the chart
+                   seriesRef.current.setData([{
+                       time: currentCandleTime,
+                       open: currentPrice,
+                       high: currentPrice,
+                       low: currentPrice,
+                       close: currentPrice
+                   }]);
+                   return; // Done
+               }
+           }
+
+           // Otherwise, just append a new candle for the current period
            seriesRef.current.update({
                time: currentCandleTime,
                open: isDaily ? stockData.open : currentPrice,
