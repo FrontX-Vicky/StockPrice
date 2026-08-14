@@ -128,6 +128,9 @@ const smart_api = new SmartAPI({
     api_key: API_KEY,
 });
 
+let isHistoricalSyncing = false;
+let wsReconnectAttempts = 0;
+
 async function authenticateAndConnect() {
     try {
         if (!API_KEY || !CLIENT_CODE || !PIN || !TOTP_SECRET) {
@@ -142,12 +145,19 @@ async function authenticateAndConnect() {
         
         if (session.status) {
             console.log("Authentication successful.");
+            wsReconnectAttempts = 0; // reset on success
             const jwttoken = session.data.jwtToken;
             const feedtoken = session.data.feedToken;
 
             connectSmartApiWebsocket(jwttoken, feedtoken);
             
             // Start historical sync and EMA calculations in the background
+            if (isHistoricalSyncing) {
+                console.log("Historical sync is already running. Skipping duplicate spawn.");
+                return;
+            }
+            isHistoricalSyncing = true;
+            
             const { syncAllHistoricalData, calculateEMAs, calculateIndexCloses, calculateMomentumStats } = require('./historical');
             const { dbInitPromise } = require('./db');
             
@@ -181,7 +191,10 @@ async function authenticateAndConnect() {
                 console.log("EMA, Index, and Momentum calculations complete.");
                 isHistoricalSyncComplete = true;
                 broadcast({ type: 'sync_complete' });
-            }).catch(err => console.error("Error in historical sync:", err));
+            }).catch(err => console.error("Error in historical sync:", err))
+            .finally(() => {
+                isHistoricalSyncing = false;
+            });
 
         } else {
             console.error("Authentication failed:", session.message);
@@ -306,8 +319,10 @@ function connectSmartApiWebsocket(jwttoken, feedtoken) {
     });
 
     smartApiWs.on('close', () => {
-        console.log("SmartAPI WS Closed. Reconnecting...");
-        setTimeout(authenticateAndConnect, 5000);
+        wsReconnectAttempts++;
+        const backoffMs = Math.min(1000 * Math.pow(2, wsReconnectAttempts), 60000); // 2s, 4s, 8s, up to 60s
+        console.log(`SmartAPI WS Closed. Reconnecting in ${backoffMs/1000}s (Attempt ${wsReconnectAttempts})...`);
+        setTimeout(authenticateAndConnect, backoffMs);
     });
 }
 

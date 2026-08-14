@@ -4,6 +4,8 @@ const { EMA } = require('technicalindicators');
 // Delay helper for rate limiting
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
+let globalBackoffUntil = 0;
+
 const formatDate = (date) => {
     return date.getFullYear() + '-' + 
            String(date.getMonth()+1).padStart(2,'0') + '-' + 
@@ -55,6 +57,14 @@ async function fetchHistoricalSafely(smart_api, symbol, token, exchange, interva
 
     while (attempts < maxAttempts) {
         try {
+            // Check global backoff
+            const now = Date.now();
+            if (now < globalBackoffUntil) {
+                const waitTime = globalBackoffUntil - now;
+                console.log(`Global backoff active. Waiting ${Math.ceil(waitTime/1000)}s before fetching ${symbol}...`);
+                await delay(waitTime);
+            }
+
             const payload = {
                 exchange: exchange,
                 symboltoken: token,
@@ -81,8 +91,14 @@ async function fetchHistoricalSafely(smart_api, symbol, token, exchange, interva
             if (attempts >= maxAttempts) {
                 console.error(`Failed to fetch historical for ${symbol} (${interval}) after ${maxAttempts} attempts:`, err.message);
             } else {
-                // Wait for 5 seconds before retrying to let the WAF unblock the IP
-                await new Promise(res => setTimeout(res, 5000));
+                // If it's a rate limit or WAF block, trigger global backoff
+                const isRateLimit = err.message && (err.message.includes('Rate limit') || err.message.includes('429') || err.message.includes('403') || err.message.includes('Access denied') || err.message.includes('Too many requests') || err.message.includes('AB1021'));
+                if (isRateLimit) {
+                    console.log(`Rate limit detected for ${symbol}. Triggering 60s global backoff.`);
+                    globalBackoffUntil = Date.now() + 60000;
+                }
+                // Wait for 5 seconds before retrying
+                await delay(5000);
             }
         }
     }
@@ -105,15 +121,15 @@ async function syncAllHistoricalData(smart_api, tokens, fnoTokens, indexTokens, 
         
         // Fetch Daily
         await fetchHistoricalSafely(smart_api, stock.symbol, stock.token, stock.exchange, 'ONE_DAY');
-        await delay(1000); // Rate limit buffer (~1 req/sec)
+        await delay(2000); // Rate limit buffer (~0.5 req/sec)
 
         // Fetch 5-Min for Momentum Phase 3 rule
         await fetchHistoricalSafely(smart_api, stock.symbol, stock.token, stock.exchange, 'FIVE_MINUTE');
-        await delay(1000); 
+        await delay(2000); 
 
         // Fetch 3-Min for Intraday tab
         await fetchHistoricalSafely(smart_api, stock.symbol, stock.token, stock.exchange, 'THREE_MINUTE');
-        await delay(1000);
+        await delay(2000);
         
         if (progressCallback && i % 5 === 0) {
             progressCallback(i + 1, allStocks.length);
